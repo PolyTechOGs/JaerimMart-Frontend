@@ -1,3 +1,4 @@
+
 <template>
   <div class="page-wrapper">
     <div class="register-container">
@@ -12,6 +13,8 @@
           autocomplete="username"
           required
         />
+        <div v-if="!isUserIdAvailable" class="warning">이미 사용 중인 아이디입니다.</div>
+
         <input
           id="register-password"
           name="password"
@@ -21,6 +24,7 @@
           autocomplete="new-password"
           required
         />
+
         <input
           id="register-email"
           name="email"
@@ -30,6 +34,8 @@
           autocomplete="email"
           required
         />
+        <div v-if="!isEmailAvailable" class="warning">이미 사용 중인 이메일입니다.</div>
+
         <input
           id="register-nickname"
           name="nickname"
@@ -39,25 +45,97 @@
           autocomplete="nickname"
           required
         />
-        <button type="submit">회원가입</button>
+        <div v-if="!isNicknameAvailable" class="warning">이미 사용 중인 닉네임입니다.</div>
+
+        <button
+          type="submit"
+          :disabled="!isUserIdAvailable || !isEmailAvailable || !isNicknameAvailable || isChecking"
+        >
+          회원가입
+        </button>
       </form>
       <router-link to="/login">로그인</router-link>
     </div>
   </div>
 </template>
 
+
 <script setup>
-import { ref } from 'vue'
+
+import { ref, watch } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import debounce from 'lodash/debounce'
 
 const userid = ref('')
 const password = ref('')
 const email = ref('')
 const nickname = ref('')
+const isUserIdAvailable = ref(true)
+const isEmailAvailable = ref(true)
+const isNicknameAvailable = ref(true)
+const isChecking = ref(false)
 const router = useRouter()
 
+const checkUserId = debounce(async () => {
+  if (!userid.value) return
+  isChecking.value = true
+  try {
+    const res = await axios.get('http://localhost:8080/api/users/check-userid', {
+      params: { userid: userid.value }
+    })
+    isUserIdAvailable.value = res.data.available
+  } catch (err) {
+    console.error('아이디 중복 검사 실패:', err)
+    isUserIdAvailable.value = false
+  } finally {
+    isChecking.value = false
+  }
+}, 500)
+
+const checkEmail = debounce(async () => {
+  if (!email.value) return
+  isChecking.value = true
+  try {
+    const res = await axios.get('http://localhost:8080/api/users/check-email', {
+      params: { email: email.value }
+    })
+    isEmailAvailable.value = res.data.available
+  } catch (err) {
+    console.error('이메일 중복 검사 실패:', err)
+    isEmailAvailable.value = false
+  } finally {
+    isChecking.value = false
+  }
+}, 500)
+
+const checkNickname = debounce(async () => {
+  if (!nickname.value) return
+  isChecking.value = true
+  try {
+    const res = await axios.get('http://localhost:8080/api/users/check-nickname', {
+      params: { nickname: nickname.value }
+    })
+    isNicknameAvailable.value = res.data.available
+  } catch (err) {
+    console.error('닉네임 중복 검사 실패:', err)
+    isNicknameAvailable.value = false
+  } finally {
+    isChecking.value = false
+  }
+}, 500)
+
+// 실시간 검사 트리거
+watch(userid, () => checkUserId())
+watch(email, () => checkEmail())
+watch(nickname, () => checkNickname())
+
 const handleRegister = async () => {
+  if (!isUserIdAvailable.value || !isEmailAvailable.value || !isNicknameAvailable.value) {
+    alert('중복된 정보가 있습니다. 수정 후 다시 시도해주세요.')
+    return
+  }
+
   try {
     const response = await axios.post('http://localhost:8080/api/users/signup', {
       userid: userid.value,
@@ -75,6 +153,7 @@ const handleRegister = async () => {
   }
 }
 </script>
+
 
 <style scoped>
 :global(html),
@@ -161,6 +240,13 @@ a {
   color: #ff6666;
   text-decoration: underline;
   font-size: 1rem;
+}
+
+.warning {
+  color: #ff9999;
+  font-size: 0.9rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 /* 반응형 */

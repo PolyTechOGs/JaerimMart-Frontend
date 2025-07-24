@@ -7,6 +7,7 @@ import FreePage from '@/views/FreePage.vue'
 import NoticePage from '@/views/NoticePage.vue'
 import TipPage from '@/views/TipPage.vue'
 import BoardWrite from '@/views/BoardWrite.vue'
+import MyPageView from '@/views/MyPageView.vue'
 const routes = [
   { path: '/', component: HomePage }, // 홈페이지
   { path: '/login', component: LoginView },
@@ -15,7 +16,8 @@ const routes = [
   { path: '/board/notice', name: 'NoticePage', component: NoticePage },
   { path: '/board/tip', name: 'TipPage', component: TipPage },
   { path: '/board/free', name: 'FreePage', component: FreePage },
-  { path: '/board/:boardType/write', name: 'BoardWrite', component:BoardWrite}
+  { path: '/board/:boardType/write', name: 'BoardWrite', component:BoardWrite},
+  { path: '/mypage', component:MyPageView}
 
 
 ]
